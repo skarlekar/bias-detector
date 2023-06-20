@@ -48,8 +48,10 @@ def process():
             Examples of sexuality bias: male dominated, women-owned
             Examples of neighborhood bias: highly sought-after neighborhood, good schools, rich community, poor neighborhood
             Examples of race bias: black people, mexican, chinese, indian, african
+            Examples of gender bias: male, female, transgender, gender neutral, non-binary, agender, pangender, genderqueer, two-spirit, third gender, and all combination of these
+            Examples of ethnicity bias: latino, asian, native american, alaska native, native hawaiian
 
-            Example of what is not a bias: white fence, black door, brown pen
+            Example of what is not a bias: "white fence", "black door", "brown pen"
             
             """        
         template_string = template_string + """text: ```{text}```"""
@@ -72,15 +74,9 @@ def process():
         # Display total count
         st.warning(f"There were {total_count} biases found in the given text")
         # Plot table and barchart
-        plot_chart(prohibited_phrases=prohibited_phrases, result=response_content)
+        plot_chart(prohibited_phrases=options, result=response_content)
         # Display highlighted text from response
-        st.write(highlighted_text)
-
-
-
-
-
-
+        st.markdown(highlighted_text)
 
 
 def authenticate():
