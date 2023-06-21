@@ -1,0 +1,133 @@
+import streamlit as st
+import streamlit_authenticator as stauth
+import yaml
+from yaml.loader import SafeLoader
+from langchain.chat_models import ChatOpenAI
+from langchain.prompts import ChatPromptTemplate
+import json
+
+def plot_chart(prohibited_phrases, result):
+    response = {}
+    for p in prohibited_phrases:
+        if p in result:
+            val = result[p]
+            response.update({p: val})
+        else:
+            response.update({p: 0})
+    st.dataframe(response, use_container_width = True)
+    st.bar_chart(response)
+
+def process():
+    st.header("Enter text to detect bias")
+    prohibited_phrases = ['sexuality','neighborhood', 'disability', 'marital status', 'age', 'race', 'ethnicity', 'religion', 'gender']
+    options = st.sidebar.multiselect('Bias to Detect', prohibited_phrases, prohibited_phrases )
+    options_str = str.join(',', options)
+    options_str_key = options_str.replace(" ", "_") + ", total_count, highlighted_text"
+
+    chat = ChatOpenAI(temperature=0.0)
+
+    user_input = st.text_area("Text to analyze:")
+    if user_input:
+        ## Create a prompt template
+        # template_string = f"""
+        #     Find the count of bias that has a reference to each of these prohibited terms: {options_str} in the text delimited by triple backticks.
+        #     Do not count color of objects such as 'fence' or 'door' toward race bias or ethnicity bias. For example, white fence or black door is not a racial bias.
+        #     Highlight all the sections in the text where the prohibited phrases are found. Provide the response only in JSON format with the following keys: {options_str_key}. 
+        #     Put the total count of bias found in the JSON under the key 'total_count'.
+        #     Put the highlighted section where the prohibited phrase is found in the JSON under the key 'highlighted_text'. Use markdown for highlighting the prohibited phrases that were detected. 
+             
+            
+        #     """
+        template_string = f"""
+            Find the total number of biases that indicates a reference to prohibited terms such as: {options_str} in the text delimited by triple backticks.
+            Highlight all the sections in the text where the prohibited phrases are found. Provide the response only in JSON format with the following keys: {options_str_key}. 
+            Put the total count of biases found in the JSON under the key 'total_count'.
+            Add the highlighted section where the prohibited phrase is found in the JSON under the key 'highlighted_text'. Use markdown for highlighting the prohibited phrases that were detected. 
+
+            Examples of religious bias: hindu temple, church, synagogue, mosque
+            Examples of sexuality bias: male dominated, women-owned
+            Examples of neighborhood bias: highly sought-after neighborhood, good schools, rich community, poor neighborhood
+            Examples of race bias: black people, mexican, chinese, indian, african
+            Examples of gender bias: male, female, transgender, gender neutral, non-binary, agender, pangender, genderqueer, two-spirit, third gender, and all combination of these
+            Examples of ethnicity bias: latino, asian, native american, alaska native, native hawaiian
+
+            Example of what is not a bias: "white fence", "black door", "brown pen"
+            
+            """        
+        template_string = template_string + """text: ```{text}```"""
+        prompt_template = ChatPromptTemplate.from_template(template_string)
+
+        ## Create a prompt from user input
+        prompt = prompt_template.format_messages (text=user_input)
+
+        ## Call OpenAI LLM with prompt and receive response
+        response = chat(prompt)
+
+        ## Process response
+        print(response.content)
+        # Convert response content to JSON
+        response_content = json.loads(response.content)
+        # Get individual elements from JSON
+        total_count = response_content['total_count']
+        highlighted_text = response_content['highlighted_text']
+
+        ## Display result
+        # Display total count
+        st.warning(f"There were {total_count} biases found in the given text")
+        # Plot table and barchart
+        plot_chart(prohibited_phrases=options, result=response_content)
+        # Display highlighted text from response
+        st.markdown(highlighted_text)
+
+
+def authenticate():
+    with open('./config.yaml') as file:
+        config = yaml.load(file, Loader=SafeLoader)
+    authenticator = stauth.Authenticate(
+        config['credentials'],
+        config['cookie']['name'],
+        config['cookie']['key'],
+        config['cookie']['expiry_days'],
+        config['preauthorized']
+    )
+    name, authentication_status, username = authenticator.login('Login', 'main')
+    if st.session_state["authentication_status"]:
+        authenticator.logout('Logout', 'main', key='unique_key')
+        st.write(f'Welcome *{st.session_state["name"]}*')
+        process()
+    elif st.session_state["authentication_status"] is False:
+        st.error('Username/password is incorrect')
+    elif st.session_state["authentication_status"] is None:
+        st.warning('Please enter your username and password')
+    return name, authentication_status, username
+
+def hide_streamlit_menu_and_footer():
+    hide_streamlit_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            footer:after {
+                content:'Made by Multifamily Architecture'; 
+                visibility: visible;
+                display: block;
+                position: relative;
+                #background-color: red;
+                padding: 5px;
+                top: 2px;
+            }
+            </style>
+            """
+    st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
+def main():
+    st.set_page_config(page_title="Bias Detector")
+    st.title("Detect bias in given text")
+    hide_streamlit_menu_and_footer()
+    name, authstatus, username = authenticate() 
+
+if __name__ == '__main__':
+    main()
+
+
+    
+
