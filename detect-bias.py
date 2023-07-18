@@ -61,7 +61,7 @@ def process():
     output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
     format_instructions = output_parser.get_format_instructions()
 
-    chat = ChatOpenAI(temperature=0.0)
+    chat = ChatOpenAI(temperature=0.0, model='gpt-4')
 
     user_input = st.text_area("Text to analyze:")
     if user_input:
