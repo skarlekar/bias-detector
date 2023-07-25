@@ -11,7 +11,7 @@ Bias Detector is a machine learning utility built using OpenAI's GPT (Generative
 - Religion
 - Gender
   
-The objective of Bias Detector is to foster inclusivity and ensure fairness by identifying potential biases that could unintentionally creep into documents.
+The objective of Bias Detector is to foster inclusivity and ensure fairness by identifying potential biases that could unintentionally creep into documents. It helps eliminate the implicit undertones in your text that might otherwise go unnoticed without a **Bias Detector**.
 
 ## Features
 
@@ -19,7 +19,7 @@ Through an interactive web-based interface, users have the control to select or 
 
 Upon execution, Bias Detector scans the text or document input, detecting any biases based around the categories listed above. It subsequently returns a comprehensive JSON object. This object contains a count of the detected biases, a detailed explanation pinpointing where in the text the bias was found, as well as snippets of the document with the highlighted bias term. The structure of the output makes it easy to trace back the detected biases to their origins in the text.
 
-Eliminate the implicit undertones in your text that might otherwise go unnoticed with **Bias Detector**.
+
 
 In terms of its tech stack, Bias Detector is engineered with LangChain for methodical prompt control and uses Streamlit for rendering a smooth and interactive user interface.
 
